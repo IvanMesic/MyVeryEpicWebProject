@@ -47,18 +47,6 @@ namespace MyEpicMVCProj.Controllers
             return View(vmUser);
         }
 
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-
-        public IActionResult Edit(int id)
-        {
-            var blUser = _userRepository.GetSpecific(id);
-            var vmUser = _mapper.Map<VMPerson>(blUser);
-            return View(vmUser);
-        }
 
         [HttpPut]
         public IActionResult Edit(VMPerson vmUser)
