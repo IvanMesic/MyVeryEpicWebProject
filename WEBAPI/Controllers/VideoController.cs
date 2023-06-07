@@ -5,30 +5,27 @@ using System.Linq;
 using WEBAPI.BLModels;
 using WEBAPI.Mapping;
 using WEBAPI.Models;
+using System.Drawing;
 
 
 
 namespace WEBAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Video")]
     [ApiController]
     public class VideoController : ControllerBase
     {
-        private  RwaMoviesContext _context;
+        private RwaMoviesContext _context;
 
         public VideoController(DbContext context)
         {
-            _context = (RwaMoviesContext?)context;
+            _context = (RwaMoviesContext)context;
         }
 
-        // GET: api/video
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Video>>> GetVideos()
-        {
-            return await _context.Videos.ToListAsync();
-        }
+        #region CRUD
 
-        // GET: api/video/5
+
+        // GET: ID
         [HttpGet("{id}")]
         public async Task<ActionResult<Video>> GetVideo(int id)
         {
@@ -41,38 +38,43 @@ namespace WEBAPI.Controllers
 
             return video;
         }
-
-        // PUT: api/video/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVideo(int id, Video video)
+        //PUT:
+        [HttpPut("put/{id}")]
+        public async Task<IActionResult> UpdateVideo(int id, [FromBody] Video video)
         {
-            if (id != video.Id)
+            if (video == null)
             {
                 return BadRequest();
             }
 
-            _context.Entry(video).State = EntityState.Modified;
+            var existingVideo = await _context.Videos.FindAsync(id);
+
+            if (existingVideo == null)
+            {
+                return NotFound();
+            }
+
+            existingVideo.Name = video.Name;
+            existingVideo.Description = video.Description;
+            existingVideo.Image = video.Image;
+            existingVideo.TotalSeconds = video.TotalSeconds;
+            existingVideo.StreamingUrl = video.StreamingUrl;
+            existingVideo.Genre = video.Genre;
+            existingVideo.VideoTags = video.VideoTags;
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception exception)
             {
-                if (!VideoExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(StatusCodes.Status500InternalServerError, exception);
             }
-
             return NoContent();
         }
 
-        // POST: api/video
+
+        // POST: 
         [HttpPost()]
         public async Task<ActionResult<BLVideo>> PostVideo(BLVideo video)
         {
@@ -93,23 +95,27 @@ namespace WEBAPI.Controllers
             }
             catch (Exception ex)
             {
-
-              return StatusCode(
-                     StatusCodes.Status500InternalServerError,
-                    "There has been a problem while fetching the data you requested");
+                return StatusCode(
+                       StatusCodes.Status500InternalServerError,
+                      "There has been a problem while fetching the data you requested");
             }
         }
 
-        // DELETE: api/video/5
+        // DELETE:
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVideo(int id)
         {
-            var video = await _context.Videos.FirstOrDefaultAsync(x=>x.Id==id);
+            var genre = await _context.Genres.Include(g => g.Videos)
+                .SingleOrDefaultAsync(v => v.Id == id);
+            var video = await _context.Videos.Include(v => v.VideoTags)
+                .Include(v => v.Genre)
+                .SingleOrDefaultAsync(v => v.Id == id);
             if (video == null)
             {
                 return NotFound();
             }
 
+            _context.VideoTags.RemoveRange(video.VideoTags);
             _context.Videos.Remove(video);
             await _context.SaveChangesAsync();
 
@@ -120,5 +126,85 @@ namespace WEBAPI.Controllers
         {
             return _context.Videos.Any(e => e.Id == id);
         }
+
+        #endregion
+
+
+        // GET: filter
+        [HttpGet("[action]")]
+        public async Task<ActionResult<List<Video>>> Search(int? min, int? max, string orderBy, string direction, int page, int size)
+        {
+            try
+            {
+                // Cookie handling
+                var searchMinStr = HttpContext.Request.Cookies["search.min"];
+                if (min.HasValue)
+                {
+                    // Add/update cookie value
+                    HttpContext.Response.Cookies.Append("search.min", min.Value.ToString());
+
+                }
+                else if (!string.IsNullOrEmpty(searchMinStr))
+                {
+                    // Read value if exists
+                    min = int.Parse(searchMinStr);
+                }
+
+                var searchMaxStr = HttpContext.Request.Cookies["search.max"];
+                if (max.HasValue)
+                {
+                    // Add/update cookie value
+                    HttpContext.Response.Cookies.Append("search.max", max.Value.ToString());
+
+                }
+                else if (!string.IsNullOrEmpty(searchMaxStr))
+                {
+                    // Read value if exists
+                    min = int.Parse(searchMaxStr);
+                }
+
+                IEnumerable<Video> receipts = await _context.Videos.ToListAsync();
+
+                // Filtering
+                if (min.HasValue)
+                    receipts = receipts.Where(x => x.TotalSeconds >= min);
+
+                if (max.HasValue)
+                    receipts = receipts.Where(x => x.TotalSeconds <= max);
+
+                // Ordering
+                if (string.Compare(orderBy, "id", true) == 0)
+                {
+                    receipts = receipts.OrderBy(x => x.Id);
+                }
+                else if (string.Compare(orderBy, "total", true) == 0)
+                {
+                    receipts = receipts.OrderBy(x => x.TotalSeconds);
+                }
+                else // default: order by Id
+                {
+                    receipts = receipts.OrderBy(x => x.Id);
+                }
+
+                // Ordering direction
+                if (string.Compare(direction, "desc", true) == 0)
+                {
+                    receipts = receipts.Reverse();
+                }
+
+                // Paging
+                //receipts = receipts.Skip(page * size).Take(size);
+
+                // Session handling
+                HttpContext.Session.SetString("receipts.search.count", receipts.Count().ToString());
+
+                return receipts.ToList();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
     }
 }

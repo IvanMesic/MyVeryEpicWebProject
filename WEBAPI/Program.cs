@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System.Text.Json.Serialization;
 using WEBAPI.Models;
+using WEBAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,35 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<DbContext, RwaMoviesContext>();
+
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
+//jwt
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        var jwtKey = builder.Configuration["JWT:Key"];
+        var jwtKeyBytes = Encoding.UTF8.GetBytes(jwtKey);
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["JWT:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["JWT:Audience"],
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(jwtKeyBytes),
+            ValidateLifetime = true,
+        };
+    });
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
+
+//builder.Services.AddSingleton<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
 
 builder.Services.AddDbContext<RwaMoviesContext>(options =>
 {
@@ -26,6 +59,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -36,7 +70,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseSession();
 app.UseAuthorization();
 
 app.MapControllers();

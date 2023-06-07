@@ -19,12 +19,12 @@ namespace WEBAPI.Mapping
                 StreamingUrl = video.StreamingUrl,
                 ImageId = video.ImageId,
             };
-        public static IEnumerable<Video> MapToDAL(IEnumerable<BLVideo> blvideos) 
+        public static IEnumerable<Video> MapToDAL(IEnumerable<BLVideo> blvideos)
             => (IEnumerable<Video>)blvideos.Select(x => MapToDAL(x));
 
 
         public static Video MapToDAL(BLVideo video) =>
-            new  Video
+            new Video
             {
                 Id = video.Id,
                 Name = video.Name,

@@ -1,0 +1,10 @@
+﻿@using (Html.BeginForm())
+{
+    <div class="form-group">
+        @Html.Label(labelText: "First Name", expression: "firstName")
+        @Html.TextBox("firstName", value: "", htmlAttributes: new { @class = "form-control" })
+    </div>
+    <div>
+        <input type="submit" value="Add" class="btn btn-secondary" />
+    </div>
+}

@@ -5,7 +5,11 @@ VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WEBAPI", "WEBAPI\WEBAPI.csproj", "{B8C3E3CC-F194-4624-BB3B-7BCB6F8EE61A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyEpicMVCProj", "MyEpicMVCProj\MyEpicMVCProj.csproj", "{E83515ED-A604-4787-860B-7E614A246068}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyEpicMVCProj", "MyEpicMVCProj\MyEpicMVCProj.csproj", "{E83515ED-A604-4787-860B-7E614A246068}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0307CD8A-01C2-42A9-94A6-5EFE029EB818}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{CA39816C-6FF1-4F3C-B9A6-8DF29258B06E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,10 @@ Global
 		{E83515ED-A604-4787-860B-7E614A246068}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E83515ED-A604-4787-860B-7E614A246068}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E83515ED-A604-4787-860B-7E614A246068}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA39816C-6FF1-4F3C-B9A6-8DF29258B06E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA39816C-6FF1-4F3C-B9A6-8DF29258B06E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA39816C-6FF1-4F3C-B9A6-8DF29258B06E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA39816C-6FF1-4F3C-B9A6-8DF29258B06E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

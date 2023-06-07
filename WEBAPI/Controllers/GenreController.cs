@@ -5,28 +5,28 @@ using WEBAPI.Models;
 
 namespace WEBAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Genre")]
     [ApiController]
     public class GenreController : ControllerBase
     {
         private readonly RwaMoviesContext _context;
 
-        public GenreController(RwaMoviesContext context)
+        public GenreController(DbContext context)
         {
-            _context = context;
+            _context = (RwaMoviesContext)context;
         }
 
         private readonly RwaMoviesContext _dbContext;
 
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<Genre>> GetAll()
+        public async Task<ActionResult<IEnumerable<Genre>>> GetAll()
         {
             Console.WriteLine(_dbContext);
-            
+
             try
             {
-                return _dbContext.Genres;
+                return await _context.Genres.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -41,7 +41,7 @@ namespace WEBAPI.Controllers
         {
             try
             {
-                var dbGenres = _dbContext.Genres.Where(x => x.Name.Contains(searchPart));
+                var dbGenres = _context.Genres.Where(x => x.Name.Contains(searchPart));
                 return Ok(dbGenres);
             }
             catch (Exception ex)
@@ -57,7 +57,7 @@ namespace WEBAPI.Controllers
         {
             try
             {
-                var dbGenre = _dbContext.Genres.FirstOrDefault(x => x.Id == id);
+                var dbGenre = _context.Genres.FirstOrDefault(x => x.Id == id);
                 if (dbGenre == null)
                     return NotFound($"Could not find genre with id {id}");
 
@@ -79,9 +79,9 @@ namespace WEBAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                _dbContext.Genres.Add(genre);
+                _context.Genres.Add(genre);
 
-                _dbContext.SaveChanges();
+                _context.SaveChanges();
 
                 return Ok(genre);
             }
@@ -101,14 +101,14 @@ namespace WEBAPI.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var dbGenre = _dbContext.Genres.FirstOrDefault(x => x.Id == id);
+                var dbGenre = _context.Genres.FirstOrDefault(x => x.Id == id);
                 if (dbGenre == null)
                     return NotFound($"Could not find genre with id {id}");
 
                 dbGenre.Name = genre.Name;
                 dbGenre.Description = genre.Description;
 
-                _dbContext.SaveChanges();
+                _context.SaveChanges();
 
                 return Ok(dbGenre);
             }
@@ -125,13 +125,13 @@ namespace WEBAPI.Controllers
         {
             try
             {
-                var dbGenre = _dbContext.Genres.FirstOrDefault(x => x.Id == id);
+                var dbGenre = _context.Genres.FirstOrDefault(x => x.Id == id);
                 if (dbGenre == null)
                     return NotFound($"Could not find genre with id {id}");
 
-                _dbContext.Genres.Remove(dbGenre);
+                _context.Genres.Remove(dbGenre);
 
-                _dbContext.SaveChanges();
+                _context.SaveChanges();
 
                 return Ok(dbGenre);
             }
@@ -146,4 +146,3 @@ namespace WEBAPI.Controllers
     }
 }
 
-  
