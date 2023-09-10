@@ -1,4 +1,5 @@
-﻿using WEBAPI.BLModels;
+﻿using Common.DALModels;
+using WEBAPI.BLModels;
 using WEBAPI.Models;
 
 namespace WEBAPI.Mapping

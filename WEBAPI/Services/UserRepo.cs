@@ -1,22 +1,23 @@
 ﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.IdentityModel.Tokens;
-using static WEBAPI.Services.UserRepo;
+using static WEBAPI.Services.UserRepoAPI;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using WEBAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using Common.DALModels;
 
 namespace WEBAPI.Services
 {
-    public class UserRepo : IUserRepo
+    public class UserRepoAPI : IUserRepoAPI
     {
         private readonly List<User> _users = new List<User>();
         private readonly IConfiguration _configuration;
         private readonly RwaMoviesContext _context;
 
-        public UserRepo(IConfiguration configuration, DbContext context)
+        public UserRepoAPI(IConfiguration configuration, DbContext context)
         {
             _configuration = configuration;
             _context = (RwaMoviesContext)context;

@@ -1,8 +1,9 @@
-﻿using WEBAPI.Models;
+﻿using Common.DALModels;
+using WEBAPI.Models;
 
 namespace WEBAPI.Services
 {
-    public interface IUserRepo
+    public interface IUserRepoAPI
     {
         User Add(UserRegisterRequest request);
         void ValidateEmail(ValidateEmailRequest request);

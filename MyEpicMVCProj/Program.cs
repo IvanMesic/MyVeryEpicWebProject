@@ -16,6 +16,12 @@ builder.Services.AddDbContext<RwaMoviesContext>(options =>
 });
 
 builder.Services.AddScoped<IUserReposi, UserReposi>();
+builder.Services.AddScoped<IVideoRepo, VideoRepository>();
+//add scoped for tag repo
+builder.Services.AddScoped<ITagRepository, TagRepository>();
+//scoped for Country repo
+builder.Services.AddScoped<ICountryRepo, CountryRepository>();
+
 
 builder.Services.AddAutoMapper(typeof(MyEpicMVCProj.Mapping.AutomapperProfile),
                                typeof(Common.Mapping.AutomapperProfile));
@@ -43,7 +49,7 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=User}/{action=Index}/{id?}");
+        name: "default",
+        pattern: "{controller=VideoMvc}/{action=Index}/{id?}");
 
 app.Run();

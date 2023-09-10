@@ -40,7 +40,7 @@ namespace MyEpicMVCProj.Controllers
             var person = _persons.FirstOrDefault(x => x.Id == id);
             ViewData["person"] = person;
 
-            return View();
+            return RedirectToAction("Edit");
         }
 
         [HttpPost]

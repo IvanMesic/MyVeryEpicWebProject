@@ -9,7 +9,7 @@ namespace Common.Interfaces
 {
     public interface IUserReposi
     {
-        public IEnumerable<BLUser> FuckAll();
+        public IEnumerable<BLUser> GetAll();
         BLUser GetSpecific(int id);
         void Add(BLUser user);
         void Update(BLUser user);

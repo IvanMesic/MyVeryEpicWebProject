@@ -4,83 +4,102 @@ using Newtonsoft.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using WEBAPI.Models;
+using AutoMapper;
+using Common.Interfaces;
+using MyEpicMVCProj.ViewModels;
+using Common.BLModels;
 
 namespace MVC.Controllers
 {
     public class VideoMvcController : Controller
     {
-        private HttpClient _client = new HttpClient();
-        private string _apiUrl = "http://localhost:7122/api/Video"; // Replace with your Web API URL
+        private readonly IVideoRepo _videoRepository;
+        private readonly IMapper _mapper;
 
-        public async Task<IActionResult> Index()
+        public VideoMvcController(IVideoRepo videoRepository, IMapper mapper)
         {
-            var responseString = await _client.GetStringAsync(_apiUrl);
-            var videoList = JsonConvert.DeserializeObject<List<Video>>(responseString);
-            return View(videoList);
+            _videoRepository = videoRepository;
+            _mapper = mapper;
         }
 
+        public IActionResult Index(int page = 1, int pageSize = 10)
+        {
+            var totalVideos = _videoRepository.GetTotalCount();
+
+            var videos = _videoRepository.GetVideosForPage(page, pageSize);
+
+            var blVideos = _mapper.Map<IEnumerable<BLVideo>>(videos);
+            var vmVideos = _mapper.Map<IEnumerable<VMVideo>>(blVideos);
+
+            var videoListViewModel = new VideoListViewModel
+            {
+                Videos = vmVideos,
+                PageNumber = page,
+                PageSize = pageSize,
+                TotalItems = totalVideos,
+            };
+
+            return View(videoListViewModel);
+        }
+
+        public IActionResult Details(int id)
+        {
+            var blVideo = _videoRepository.GetSpecific(id);
+            var vmVideo = _mapper.Map<VMVideo>(blVideo);
+            return View(vmVideo);
+        }
+
+        [HttpGet]
         public IActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Video video)
+        public IActionResult Create(VMVideo vmVideo)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(video), Encoding.UTF8, "application/json");
-            var response = await _client.PostAsync(_apiUrl, content);
-            if (response.IsSuccessStatusCode)
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var blVideo = _mapper.Map<BLVideo>(vmVideo);
+                _videoRepository.Add(blVideo);
+                return RedirectToAction("Index");
             }
-            return View(video);
+            return View(vmVideo);
         }
 
-        public async Task<IActionResult> Edit(int id)
+        [HttpGet]
+        public IActionResult Edit(int id)
         {
-            var responseString = await _client.GetStringAsync($"{_apiUrl}/{id}");
-            var video = JsonConvert.DeserializeObject<Video>(responseString);
-            return View(video);
+            var blVideo = _videoRepository.GetSpecific(id);
+            var vmVideo = _mapper.Map<VMVideo>(blVideo);
+            return View(vmVideo);
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Video video)
+        public IActionResult Save(VMVideo vmVideo)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(video), Encoding.UTF8, "application/json");
-            var response = await _client.PutAsync($"{_apiUrl}/{id}", content);
-            if (response.IsSuccessStatusCode)
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                var blVideo = _mapper.Map<BLVideo>(vmVideo);
+                _videoRepository.Update(blVideo);
+                return RedirectToAction("Index");
             }
-            return View(video);
+            return View(vmVideo);
         }
 
-        public async Task<IActionResult> Details(int id)
+        public IActionResult Delete(int id)
         {
-            var responseString = await _client.GetStringAsync($"{_apiUrl}/{id}");
-            var video = JsonConvert.DeserializeObject<Video>(responseString);
-            return View(video);
+            var blVideo = _videoRepository.GetSpecific(id);
+            var vmVideo = _mapper.Map<VMVideo>(blVideo);
+            return View(vmVideo);
         }
 
-        public async Task<IActionResult> Delete(int id)
+        [HttpPost]
+        public IActionResult DeleteConfirmed(int id)
         {
-            var responseString = await _client.GetStringAsync($"{_apiUrl}/{id}");
-            var video = JsonConvert.DeserializeObject<Video>(responseString);
-            return View(video);
+            _videoRepository.Delete(id);
+            return RedirectToAction("Index");
         }
 
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var response = await _client.DeleteAsync($"{_apiUrl}/{id}");
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            return View();
-        }
     }
 }

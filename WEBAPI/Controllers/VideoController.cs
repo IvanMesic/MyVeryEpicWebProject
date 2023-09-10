@@ -6,8 +6,7 @@ using WEBAPI.BLModels;
 using WEBAPI.Mapping;
 using WEBAPI.Models;
 using System.Drawing;
-
-
+using Common.DALModels;
 
 namespace WEBAPI.Controllers
 {

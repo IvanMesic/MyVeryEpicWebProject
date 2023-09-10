@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Common.DALModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Octopus.Client.Repositories.Async;
 using WEBAPI.Models;
@@ -10,9 +11,9 @@ namespace WEBAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepo _userRepository;
+        private readonly IUserRepoAPI _userRepository;
 
-        public UserController(IUserRepo userRepo)
+        public UserController(IUserRepoAPI userRepo)
         {
             _userRepository = userRepo;
         }

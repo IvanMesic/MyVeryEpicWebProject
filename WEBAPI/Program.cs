@@ -1,3 +1,4 @@
+using Common.DALModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,11 +45,10 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 //builder.Services.AddSingleton<IUserRepo, UserRepo>();
-builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<IUserRepoAPI, UserRepoAPI>();
 
 builder.Services.AddDbContext<RwaMoviesContext>(options =>
 {
-    //options.UseSqlServer(builder.Configuration.GetConnectionString("Task06ConnStr"));
     options.UseSqlServer("name=ConnectionStrings:EpicConnectionString");
 });
 builder.Services.AddControllers().AddJsonOptions(x =>

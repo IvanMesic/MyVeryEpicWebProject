@@ -14,7 +14,7 @@ namespace Common.Repositories
             _context = dbContext;
             _mapper = mapper;
         }
-        public IEnumerable<BLUser> FuckAll()
+        public IEnumerable<BLUser> GetAll()
         {
             var dbUsers = _context.Users;
 

@@ -1,0 +1,43 @@
+﻿@model MyEpicMVCProj.ViewModels.CountryListViewModel
+
+@{
+    ViewData["Title"] = "GetAllCountries";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>GetAllCountries</h1>
+
+<div class="row">
+    @foreach (var item in Model.Countries)
+    {
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@Html.DisplayFor(modelItem => item.Name)</h5>
+                    <p class="card-text">
+                        Code: @Html.DisplayFor(modelItem => item.Code)
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="pagination">
+    @if (Model.PageNumber > 1)
+    {
+        <a asp-action="GetAllCountries" asp-route-page="1" asp-route-pageSize="@Model.PageSize">First</a>
+        <a asp-action="GetAllCountries" asp-route-page="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize">Previous</a>
+    }
+
+    @for (var i = 1; i <= Model.TotalPages; i++)
+    {
+        <a asp-action="GetAllCountries" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
+    }
+
+    @if (Model.PageNumber < Model.TotalPages)
+    {
+        <a asp-action="GetAllCountries" asp-route-page="@(Model.PageNumber + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
+        <a asp-action="GetAllCountries" asp-route-page="@Model.TotalPages" asp-route-pageSize="@Model.PageSize">Last</a>
+    }
+</div>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Common.DALModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WEBAPI.Models;
@@ -9,20 +10,18 @@ namespace WEBAPI.Controllers
     [ApiController]
     public class GenreController : ControllerBase
     {
-        private readonly RwaMoviesContext _context;
+        private readonly Common.DALModels.RwaMoviesContext _context;
 
-        public GenreController(DbContext context)
+        public GenreController(Common.DALModels.RwaMoviesContext context)
         {
-            _context = (RwaMoviesContext)context;
+            _context = (Common.DALModels.RwaMoviesContext)context;
         }
-
-        private readonly RwaMoviesContext _dbContext;
 
 
         [HttpGet("[action]")]
-        public async Task<ActionResult<IEnumerable<Genre>>> GetAll()
+        public async Task<ActionResult<IEnumerable<Common.DALModels.Genre>>> GetAll()
         {
-            Console.WriteLine(_dbContext);
+            Console.WriteLine(_context);
 
             try
             {
@@ -37,7 +36,7 @@ namespace WEBAPI.Controllers
         }
 
         [HttpGet("[action]")]
-        public ActionResult<IEnumerable<Genre>> Search(string searchPart)
+        public ActionResult<IEnumerable<Common.DALModels.Genre>> Search(string searchPart)
         {
             try
             {
@@ -53,7 +52,7 @@ namespace WEBAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Genre> Get(int id)
+        public ActionResult<Common.DALModels.Genre> Get(int id)
         {
             try
             {
@@ -72,7 +71,7 @@ namespace WEBAPI.Controllers
         }
 
         [HttpPost()]
-        public ActionResult<Genre> Post(Genre genre)
+        public ActionResult<Common.DALModels.Genre> Post(Common.DALModels.Genre genre)
         {
             try
             {
@@ -94,7 +93,7 @@ namespace WEBAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult<Genre> Put(int id, Genre genre)
+        public ActionResult<Common.DALModels.Genre> Put(int id, Common.DALModels.Genre genre)
         {
             try
             {
@@ -121,7 +120,7 @@ namespace WEBAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult<Genre> Delete(int id)
+        public ActionResult<Common.DALModels.Genre> Delete(int id)
         {
             try
             {

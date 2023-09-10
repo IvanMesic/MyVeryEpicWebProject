@@ -17,10 +17,6 @@ namespace MyEpicMVCProj.Models
 
         public string? Phone { get; set; }
 
-        public bool IsConfirmed { get; set; }
-
-        public string? SecurityToken { get; set; }
-
 
         public virtual Country CountryOfResidence { get; set; } = null!;
     }

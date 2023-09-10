@@ -22,12 +22,12 @@ namespace MyEpicMVCProj.Controllers
 
         public IActionResult Index()
         {
-            var blUsers = _userRepository.FuckAll();
+            var blUsers = _userRepository.GetAll();
             var vmusers = _mapper.Map<IEnumerable<VMPerson>>(blUsers);
             return View(vmusers);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("user/{id}")]
         public IActionResult Details(int id)
         {
             var blUser = _userRepository.GetSpecific(id);

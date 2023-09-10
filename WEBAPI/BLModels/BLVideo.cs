@@ -1,4 +1,5 @@
-﻿using WEBAPI.Models;
+﻿using Common.DALModels;
+using WEBAPI.Models;
 
 namespace WEBAPI.BLModels
 {
