@@ -19,7 +19,7 @@ namespace WEBAPI.Controllers
         }
 
         [HttpPost("[action]")]
-        public ActionResult<User> Register([FromBody] UserRegisterRequest request)
+        public ActionResult<User> UserRegister([FromBody] UserRegisterRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

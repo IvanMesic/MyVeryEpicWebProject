@@ -1,77 +1,127 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Octopus.Client.Repositories;
-using Common;
-using Common.Repositories;
-using AutoMapper;
-using Common.Interfaces;
+﻿using AutoMapper;
 using Common.BLModels;
+using Common.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using MyEpicMVCProj.Models;
+using MyEpicMVCProj.ViewModels;
+using System.Security.Claims;
 
 namespace MyEpicMVCProj.Controllers
 {
-
     public class UserController : Controller
     {
-        private readonly IUserReposi _userRepository;
+        private static List<VMUser> _persons = new List<VMUser>();
+        private static IUserReposi _userRepo;
         private readonly IMapper _mapper;
-        public UserController(IUserReposi userRepo, IMapper mapper)
+        private readonly ILogger<UserController> _logger;
+
+        public UserController(IUserReposi userRepository, IMapper mapper)
         {
-            _userRepository = userRepo;
+            _userRepo = userRepository;
             _mapper = mapper;
         }
 
         public IActionResult Index()
         {
-            var blUsers = _userRepository.GetAll();
-            var vmusers = _mapper.Map<IEnumerable<VMPerson>>(blUsers);
-            return View(vmusers);
-        }
+            var blUsers = _userRepo.GetAll();
+            var vmUsers = _mapper.Map<IEnumerable<VMUser>>(blUsers);
 
-        [HttpGet("user/{id}")]
-        public IActionResult Details(int id)
+            return View(vmUsers);
+        }
+        public IActionResult Register()
         {
-            var blUser = _userRepository.GetSpecific(id);
-            var vmUser = _mapper.Map<VMPerson>(blUser);
-            return View(vmUser);
+            return View();
         }
 
         [HttpPost]
-        public IActionResult Create(VMPerson vmUser)
+        public IActionResult Register(VMRegister register)
         {
-            if (ModelState.IsValid)
-            {
-                var blUser = _mapper.Map<BLUser>(vmUser);
-                _userRepository.Add(blUser);
-                return RedirectToAction("Index");
-            }
-            return View(vmUser);
+            if (!ModelState.IsValid)
+                return View(register);
+
+            var user = _userRepo.CreateUser(
+                register.Username,
+                register.FirstName,
+                register.LastName,
+                register.Email,
+                register.Password,
+                register.Country
+                );
+
+            return RedirectToAction("Index", "VideoMVC");
         }
 
-
-        [HttpPut]
-        public IActionResult Edit(VMPerson vmUser)
+        public IActionResult ValidateEmail(VMValidateEmail validateEmail)
         {
-            if (ModelState.IsValid)
-            {
-                var blUser = _mapper.Map<BLUser>(vmUser);
-                _userRepository.Update(blUser);
-                return RedirectToAction("Index");
-            }
-            return View(vmUser);
+            if (!ModelState.IsValid)
+                return View(validateEmail);
+
+            // Confirm email, skip BL for simplicity
+            _userRepo.ConfirmEmail(
+                validateEmail.Email,
+                validateEmail.SecurityToken);
+
+            return RedirectToAction("Index");
         }
 
-        public IActionResult Delete(int id)
+        public IActionResult Login()
         {
-            var blUser = _userRepository.GetSpecific(id);
-            var vmUser = _mapper.Map<VMPerson>(blUser);
-            return View(vmUser);
+            return View();
         }
 
         [HttpPost]
-        public IActionResult DeleteConfirmed(int id)
+        public IActionResult Login(VMLogin login)
         {
-            _userRepository.Delete(id);
+            if (!ModelState.IsValid)
+                return View(login);
+
+            var user = _userRepo.GetConfirmedUser(
+                login.Username,
+                login.Password);
+
+            if (user == null)
+            {
+                ModelState.AddModelError("Username", "Invalid username or password");
+                return View(login);
+            }
+
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, user.Email) };
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                new AuthenticationProperties()).Wait();
+
+            return RedirectToAction("Index", "VideoMVC");
+        }
+
+        [HttpPost]
+        public IActionResult Logout()
+        {
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
+
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ChangePassword(VMChangePassword changePassword)
+        {
+            // Change user password, skip BL for simplicity
+            _userRepo.ChangePassword(
+                changePassword.Username,
+                changePassword.NewPassword);
+
             return RedirectToAction("Index");
         }
     }
+
+
 }
+

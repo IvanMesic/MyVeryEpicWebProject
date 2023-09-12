@@ -9,7 +9,7 @@ namespace MyEpicMVCProj.Mapping
     {
         public AutomapperProfile()
         {
-            CreateMap<Common.BLModels.BLUser, Models.VMPerson>();
+            CreateMap<Common.BLModels.BLUser, Models.VMUser>();
             CreateMap<Common.BLModels.BLVideo, ViewModels.VMVideo>();
             CreateMap<ViewModels.VMVideo, Common.BLModels.BLVideo>();
             //create tag between BLTag and VMTag

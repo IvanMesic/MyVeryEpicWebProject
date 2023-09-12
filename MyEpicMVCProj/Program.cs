@@ -2,13 +2,14 @@ using Common.DALModels;
 using Common.Interfaces;
 using Common.Mapping;
 using Common.Repositories;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyEpicMVCProj.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<RwaMoviesContext>();
 builder.Services.AddDbContext<RwaMoviesContext>(options =>
 {
@@ -23,10 +24,17 @@ builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<ICountryRepo, CountryRepository>();
 
 
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie();
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+
 builder.Services.AddAutoMapper(typeof(MyEpicMVCProj.Mapping.AutomapperProfile),
                                typeof(Common.Mapping.AutomapperProfile));
 
-builder.Services.AddControllersWithViews();
+
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
 var app = builder.Build();
 
@@ -46,6 +54,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

@@ -1,4 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims;
+@using Microsoft.AspNetCore.Http;
+@inject IHttpContextAccessor httpContextAccessor
+@{
+    string username = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -20,10 +26,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="VideoMvc" asp-action="Index">Videos</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="TagMvc" asp-action="GetAllTags">Tags</a>
@@ -31,6 +34,27 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Country" asp-action="GetAllCountries">Countries</a>
                         </li>
+                        @if (username != null)
+                        {
+                            <li class="nav-item">
+                                <form asp-controller="User" asp-action="Logout" class="d-inline"><button type="submit" class="btn btn-outline-primary">Logout @username</button></form>
+                            </li>
+                        }
+                        @if (username == null)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Register">Register</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <form asp-controller="User" asp-action="Logout" class="d-inline"><button type="submit" class="btn btn-outline-primary">Logout @username</button></form>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
@@ -41,7 +65,6 @@
             @RenderBody()
         </main>
     </div>
-
 
     <footer class="border-top footer text-muted">
         <div class="container">

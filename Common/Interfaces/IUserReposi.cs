@@ -9,10 +9,10 @@ namespace Common.Interfaces
 {
     public interface IUserReposi
     {
-        public IEnumerable<BLUser> GetAll();
-        BLUser GetSpecific(int id);
-        void Add(BLUser user);
-        void Update(BLUser user);
-        void Delete(int id);
+        IEnumerable<BLUser> GetAll();
+        BLUser CreateUser(string username, string firstName, string lastName, string email, string password, string countryName);
+        void ConfirmEmail(string email, string securityToken);
+        BLUser GetConfirmedUser(string username, string password);
+        void ChangePassword(string username, string newPassword);
     }
 }
