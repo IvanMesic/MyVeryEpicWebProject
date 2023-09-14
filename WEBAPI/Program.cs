@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Text.Json.Serialization;
-using WEBAPI.Models;
 using WEBAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +19,9 @@ builder.Services.AddScoped<DbContext, RwaMoviesContext>();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
+builder.Services.AddAutoMapper(typeof(WEBAPI.Mapping.AutoMapperProfile),
+                               typeof(Common.Mapping.AutomapperProfile));
+
 //jwt
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

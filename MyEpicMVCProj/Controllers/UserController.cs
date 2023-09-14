@@ -102,7 +102,7 @@ namespace MyEpicMVCProj.Controllers
         {
             HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
 
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", "VideoMVC");
         }
 
         public IActionResult ChangePassword()

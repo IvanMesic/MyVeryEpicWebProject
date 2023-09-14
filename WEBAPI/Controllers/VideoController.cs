@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
+using System.Threading.Tasks;
+using Common.DALModels;
 using WEBAPI.BLModels;
 using WEBAPI.Mapping;
 using WEBAPI.Models;
-using System.Drawing;
-using Common.DALModels;
+using System.Collections.Generic;
+using AutoMapper;
 
 namespace WEBAPI.Controllers
 {
@@ -14,17 +17,18 @@ namespace WEBAPI.Controllers
     [ApiController]
     public class VideoController : ControllerBase
     {
-        private RwaMoviesContext _context;
+        private readonly RwaMoviesContext _context;
+        private readonly IMapper _mapper;
 
-        public VideoController(DbContext context)
+        public VideoController(RwaMoviesContext context, IMapper mapper)
         {
-            _context = (RwaMoviesContext)context;
+            _context = context;
+            _mapper = mapper;
         }
 
         #region CRUD
 
-
-        // GET: ID
+        // GET: api/Video/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Video>> GetVideo(int id)
         {
@@ -37,7 +41,8 @@ namespace WEBAPI.Controllers
 
             return video;
         }
-        //PUT:
+
+        // PUT: api/Video/put/5
         [HttpPut("put/{id}")]
         public async Task<IActionResult> UpdateVideo(int id, [FromBody] Video video)
         {
@@ -69,12 +74,12 @@ namespace WEBAPI.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, exception);
             }
+
             return NoContent();
         }
 
-
-        // POST: 
-        [HttpPost()]
+        // POST: api/Video
+        [HttpPost]
         public async Task<ActionResult<BLVideo>> PostVideo(BLVideo video)
         {
             try
@@ -83,32 +88,34 @@ namespace WEBAPI.Controllers
                 {
                     return BadRequest(ModelState);
                 }
-                var dbVideo = VideoMapping.MapToDAL(video);
+
+                var dbVideo = _mapper.Map<Video>(video); // AutoMapper mapping
 
                 IQueryable<Tag> dbTags = _context.Tags.Where(x => video.VideoTags.Select(y => y.Tag).Any());
                 dbVideo.VideoTags = dbTags.Select(x => new VideoTag { Tag = x }).ToList();
 
                 _context.Videos.Add(dbVideo);
                 await _context.SaveChangesAsync();
-                return video;
+
+                var blVideo = _mapper.Map<BLVideo>(dbVideo); // AutoMapper mapping
+
+                return blVideo;
             }
             catch (Exception ex)
             {
-                return StatusCode(
-                       StatusCodes.Status500InternalServerError,
-                      "There has been a problem while fetching the data you requested");
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 
-        // DELETE:
+
+        // DELETE: api/Video/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVideo(int id)
         {
-            var genre = await _context.Genres.Include(g => g.Videos)
-                .SingleOrDefaultAsync(v => v.Id == id);
             var video = await _context.Videos.Include(v => v.VideoTags)
                 .Include(v => v.Genre)
                 .SingleOrDefaultAsync(v => v.Id == id);
+
             if (video == null)
             {
                 return NotFound();
@@ -128,80 +135,73 @@ namespace WEBAPI.Controllers
 
         #endregion
 
-
-        // GET: filter
-        [HttpGet("[action]")]
-        public async Task<ActionResult<List<Video>>> Search(int? min, int? max, string orderBy, string direction, int page, int size)
+        [HttpGet("Search")]
+        public async Task<ActionResult<IEnumerable<Video>>> Search(int? min, int? max, string orderBy = "id", string direction = "asc", int page = 1, int size = 10, string searchName = null)
         {
             try
             {
-                // Cookie handling
-                var searchMinStr = HttpContext.Request.Cookies["search.min"];
-                if (min.HasValue)
-                {
-                    // Add/update cookie value
-                    HttpContext.Response.Cookies.Append("search.min", min.Value.ToString());
-
-                }
-                else if (!string.IsNullOrEmpty(searchMinStr))
-                {
-                    // Read value if exists
-                    min = int.Parse(searchMinStr);
-                }
-
-                var searchMaxStr = HttpContext.Request.Cookies["search.max"];
-                if (max.HasValue)
-                {
-                    // Add/update cookie value
-                    HttpContext.Response.Cookies.Append("search.max", max.Value.ToString());
-
-                }
-                else if (!string.IsNullOrEmpty(searchMaxStr))
-                {
-                    // Read value if exists
-                    min = int.Parse(searchMaxStr);
-                }
-
-                IEnumerable<Video> receipts = await _context.Videos.ToListAsync();
+                IQueryable<Video> query = _context.Videos;
 
                 // Filtering
                 if (min.HasValue)
-                    receipts = receipts.Where(x => x.TotalSeconds >= min);
+                {
+                    query = query.Where(x => x.TotalSeconds >= min);
+                }
 
                 if (max.HasValue)
-                    receipts = receipts.Where(x => x.TotalSeconds <= max);
+                {
+                    query = query.Where(x => x.TotalSeconds <= max);
+                }
+
+                // Search by name
+                if (!string.IsNullOrEmpty(searchName))
+                {
+                    query = query.Where(x => x.Name.Contains(searchName));
+                }
 
                 // Ordering
-                if (string.Compare(orderBy, "id", true) == 0)
+                if (string.Equals(orderBy, "total", StringComparison.OrdinalIgnoreCase))
                 {
-                    receipts = receipts.OrderBy(x => x.Id);
+                    query = direction.ToLower() == "desc"
+                        ? query.OrderByDescending(x => x.TotalSeconds)
+                        : query.OrderBy(x => x.TotalSeconds);
                 }
-                else if (string.Compare(orderBy, "total", true) == 0)
+                else
                 {
-                    receipts = receipts.OrderBy(x => x.TotalSeconds);
-                }
-                else // default: order by Id
-                {
-                    receipts = receipts.OrderBy(x => x.Id);
-                }
-
-                // Ordering direction
-                if (string.Compare(direction, "desc", true) == 0)
-                {
-                    receipts = receipts.Reverse();
+                    query = direction.ToLower() == "desc"
+                        ? query.OrderByDescending(x => x.Id)
+                        : query.OrderBy(x => x.Id);
                 }
 
                 // Paging
-                //receipts = receipts.Skip(page * size).Take(size);
+                var totalCount = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling(totalCount / (double)size);
 
-                // Session handling
-                HttpContext.Session.SetString("receipts.search.count", receipts.Count().ToString());
+                if (page < 1)
+                {
+                    page = 1;
+                }
+                else if (page > totalPages)
+                {
+                    page = totalPages;
+                }
 
-                return receipts.ToList();
+                var pagedResults = await query.Skip((page - 1) * size).Take(size).ToListAsync();
+
+                var result = new
+                {
+                    TotalCount = totalCount,
+                    TotalPages = totalPages,
+                    CurrentPage = page,
+                    PageSize = size,
+                    Results = pagedResults
+                };
+
+                return Ok(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
 

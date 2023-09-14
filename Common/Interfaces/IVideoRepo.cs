@@ -17,6 +17,8 @@ namespace Common.Interfaces
         void Delete(int id);
         IEnumerable<Video> GetVideosForPage(int page, int pageSize);
         int GetTotalCount();
-
+        IEnumerable<Video> GetVideosForPageAndFilter(int page, int pageSize, string? filterName = null, bool ascendingOrder = true);
+        IEnumerable<Video> GetFilteredVideos(string filterName, int page, int pageSize);
+        int GetTotalCount(string filterName);
     }
 }

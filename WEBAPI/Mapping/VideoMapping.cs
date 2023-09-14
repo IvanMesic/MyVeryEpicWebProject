@@ -8,6 +8,7 @@ namespace WEBAPI.Mapping
     {
         public static IEnumerable<BLVideo> MapToBl(IEnumerable<Video> videos) => videos.Select(x => MapToBl(x));
 
+        //create map from DalTOBl
 
         public static BLVideo MapToBl(Video video) =>
             new BLVideo

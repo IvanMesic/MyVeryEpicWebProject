@@ -76,5 +76,39 @@ namespace Common.Repositories
             return _context.Videos.Count();
         }
 
+        public IEnumerable<Video> GetVideosForPageAndFilter(int page, int pageSize, string? filterName = null, bool ascendingOrder = true)
+        {
+            var query = _context.Videos.AsQueryable();
+
+            if (!string.IsNullOrEmpty(filterName))
+            {
+                query = query.Where(v => v.Name.Contains(filterName));
+            }
+
+            if (ascendingOrder)
+            {
+                query = query.OrderBy(v => v.Name);
+            }
+            else
+            {
+                query = query.OrderByDescending(v => v.Name);
+            }
+
+            return query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+
+        public IEnumerable<Video> GetFilteredVideos(string filterName, int page, int pageSize)
+        {
+            return _context.Videos
+                .Where(v => v.Name.Contains(filterName))
+                .OrderBy(v => v.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+        public int GetTotalCount(string filterName) => _context.Videos.Where(v => v.Name.Contains(filterName)).Count();
     }
 }

@@ -1,0 +1,173 @@
+﻿@{
+    ViewBag.Title = "Ajax Video List";
+}
+
+<h2>Ajax Video List</h2>
+
+<!-- Filter and Sort UI -->
+<div class="filter-sort-container">
+    <input type="text" id="videoFilter" placeholder="Filter by video name..." />
+    <select id="videoSortOrder">
+        <option value="true">Ascending</option>
+        <option value="false">Descending</option>
+    </select>
+    <button onclick="loadVideosWithUIParams()">Load Videos</button>
+</div>
+
+<!-- Video Cards Container -->
+<div id="videoCardsContainer" class="video-cards-container"></div>
+
+<!-- Pagination -->
+<div class="pagination-container">
+    <button onclick="prevPage()">Previous</button>
+    <span id="currentPage">1</span>
+    <button onclick="nextPage()">Next</button>
+</div>
+
+<script>
+    let currentPage = 1;
+    const pageSize = 10;
+
+    const videoContainer = document.getElementById('videoCardsContainer');
+
+    function loadVideosWithUIParams() {
+        const filterName = document.getElementById('videoFilter').value;
+        const ascendingOrder = document.getElementById('videoSortOrder').value === "true";
+
+        loadVideos(currentPage, pageSize, filterName, ascendingOrder);
+    }
+
+    function loadVideos(page, pageSize, filterName, ascendingOrder) {
+        $.ajax({
+            url: '/AjaxVideo/LoadVideos',
+            type: 'GET',
+            data: {
+                page: page,
+                pageSize: pageSize,
+                filterName: filterName,
+                ascendingOrder: ascendingOrder
+            },
+            success: function (data) {
+                // Clear the video container
+                videoContainer.innerHTML = '';
+
+                // Check if the videos property exists and is an array
+                if (data && Array.isArray(data.videos)) {
+                    data.videos.forEach(function (video) {
+                        const videoCard = createVideoCard(video);
+                        videoContainer.appendChild(videoCard);
+                    });
+
+                    // Update the pagination
+                    updatePagination(data.pageNumber, data.totalPages);
+                } else {
+                    console.error("Unexpected data format:", data);
+                }
+            }
+        });
+    }
+
+    function nextPage() {
+        currentPage++;
+        loadVideosWithUIParams();
+    }
+
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadVideosWithUIParams();
+        }
+    }
+    function createVideoCard(video) {
+        const videoCard = document.createElement('div');
+        videoCard.className = 'video-card';
+
+        // Video Name
+        const videoTitle = document.createElement('h3');
+        videoTitle.textContent = video.name;
+        videoCard.appendChild(videoTitle);
+
+        // Video Description
+        const videoDescription = document.createElement('p');
+        videoDescription.textContent = video.description;
+        videoCard.appendChild(videoDescription);
+
+        // Video Genre
+        if (video.genre && video.genre.name) {
+            const videoGenre = document.createElement('p');
+            videoGenre.textContent = `Genre: ${video.genre.name}`;
+            videoCard.appendChild(videoGenre);
+        }
+
+        // Video Duration
+        const videoDuration = document.createElement('p');
+        videoDuration.textContent = `Duration: ${video.totalSeconds} seconds`;
+        videoCard.appendChild(videoDuration);
+
+        // Streaming URL
+        if (video.streamingUrl) {
+            const videoLink = document.createElement('a');
+            videoLink.href = video.streamingUrl;
+            videoLink.textContent = "Watch Now";
+            videoLink.target = "_blank"; // Open in a new tab
+            videoCard.appendChild(videoLink);
+        }
+
+        // Video Image
+        if (video.image && video.image.url) {
+            const videoImage = document.createElement('img');
+            videoImage.src = video.image.url;
+            videoImage.alt = video.name + " thumbnail";
+            videoImage.style.width = '100%'; // Set to desired width
+            videoCard.appendChild(videoImage);
+        }
+
+        return videoCard;
+    }
+
+    function updatePagination(pageNumber, totalPages) {
+        const currentPageSpan = document.getElementById('currentPage');
+        currentPageSpan.textContent = pageNumber;
+
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+
+        if (pageNumber === 1) {
+            prevButton.disabled = true;
+        } else {
+            prevButton.disabled = false;
+        }
+
+        if (pageNumber === totalPages) {
+            nextButton.disabled = true;
+        } else {
+            nextButton.disabled = false;
+        }
+    }
+
+
+    // Call the function on page load to populate the list initially
+    loadVideosWithUIParams();
+</script>
+
+<style>
+    .video-cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .video-card {
+        border: 1px solid #ddd;
+        padding: 16px;
+        width: calc(33.33% - 32px); /* Assuming 3 cards in a row */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .pagination-container {
+        margin-top: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+</style>

@@ -22,11 +22,17 @@ namespace MVC.Controllers
             _mapper = mapper;
         }
 
-        public IActionResult Index(int page = 1, int pageSize = 10)
+        public IActionResult Index()
         {
-            var totalVideos = _videoRepository.GetTotalCount();
+            return View();
+        }
 
-            var videos = _videoRepository.GetVideosForPage(page, pageSize);
+        [HttpGet]
+        public IActionResult LoadVideos(int page = 1, int pageSize = 10, string filterName = null)
+        {
+            var videos = string.IsNullOrEmpty(filterName)
+                ? _videoRepository.GetVideosForPage(page, pageSize)
+                : _videoRepository.GetFilteredVideos(filterName, page, pageSize); // Ensure this method exists
 
             var blVideos = _mapper.Map<IEnumerable<BLVideo>>(videos);
             var vmVideos = _mapper.Map<IEnumerable<VMVideo>>(blVideos);
@@ -36,10 +42,10 @@ namespace MVC.Controllers
                 Videos = vmVideos,
                 PageNumber = page,
                 PageSize = pageSize,
-                TotalItems = totalVideos,
+                TotalItems = _videoRepository.GetTotalCount(filterName), // Ensure this method handles filtering
             };
 
-            return View(videoListViewModel);
+            return Json(videoListViewModel);
         }
 
         public IActionResult Details(int id)
@@ -58,7 +64,7 @@ namespace MVC.Controllers
         [HttpPost]
         public IActionResult Create(VMVideo vmVideo)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 var blVideo = _mapper.Map<BLVideo>(vmVideo);
                 _videoRepository.Add(blVideo);

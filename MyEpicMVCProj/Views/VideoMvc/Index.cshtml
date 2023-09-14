@@ -1,93 +1,211 @@
 ﻿@model MyEpicMVCProj.ViewModels.VideoListViewModel
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Admin Video Management";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index</h1>
+<h1>Video Management</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().Id)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().GenreId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().TotalSeconds)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().StreamingUrl)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Videos.First().ImageId)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Videos)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Id)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Description)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.GenreId)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.TotalSeconds)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.StreamingUrl)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.ImageId)
-                </td>
-                <td>
-                    @Html.ActionLink("Edit", "Edit", new { id=item.Id }) |
-                    @Html.ActionLink("Details", "Details", new { id=item.Id }) |
-                    @Html.ActionLink("Delete", "Delete", new { id=item.Id })
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+
+<!-- Filter Input -->
+<div>
+    <input type="text" id="videoFilter" placeholder="Filter by video name..." />
+    <button onclick="loadVideosWithUIParams()">Apply Filter</button>
+</div>
+<div id="loadingSpinner" class="spinner"></div>
+<!-- Video Cards Container -->
+<div id="videoCardsContainer" class="video-cards-container"></div>
 
 <!-- Pagination links -->
 <div class="pagination">
-    @if (Model.PageNumber > 1)
-    {
-        <a asp-action="Index" asp-route-page="1" asp-route-pageSize="@Model.PageSize">First</a>
-        <a asp-action="Index" asp-route-page="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize">Previous</a>
-    }
-
-    @for (var i = 1; i <= Model.TotalPages; i++)
-    {
-        <a asp-action="Index" asp-route-page="@i" asp-route-pageSize="@Model.PageSize">@i</a>
-    }
-
-    @if (Model.PageNumber < Model.TotalPages)
-    {
-        <a asp-action="Index" asp-route-page="@(Model.PageNumber + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
-        <a asp-action="Index" asp-route-page="@Model.TotalPages" asp-route-pageSize="@Model.PageSize">Last</a>
-    }
+    <!-- These links will be updated by JavaScript -->
 </div>
+
+<script>
+    let currentPage = 1;
+    const pageSize = 10;
+    document.cookie = "name=value; expires=date; path=path";
+
+    function loadVideosWithUIParams() {
+        const filterName = document.getElementById('videoFilter').value;
+
+        // Set the filter value in a cookie that expires in 7 days
+        let date = new Date();
+        date.setDate(date.getDate() + 7);
+        document.cookie = `videoFilter=${filterName}; expires=${date.toUTCString()}; path=/`;
+
+        loadVideos(currentPage, pageSize, filterName);
+    }
+
+    function getCookie(name) {
+        let value = "; " + document.cookie;
+        let parts = value.split("; " + name + "=");
+        if (parts.length == 2) return parts.pop().split(";").shift();
+    }
+
+    function loadVideos(page, pageSize, filterName) {
+       
+        document.getElementById('loadingSpinner').style.display = 'block';
+
+        $.ajax({
+            url: '/VideoMvc/LoadVideos',
+            type: 'GET',
+            data: {
+                page: page,
+                pageSize: pageSize,
+                filterName: filterName
+            },
+            success: function (data) {
+                
+                document.getElementById('loadingSpinner').style.display = 'none';
+
+                populateVideos(data.videos);
+                updatePagination(data.pageNumber, data.totalPages, pageSize);
+            }
+        });
+    }
+
+    function populateVideos(videos) {
+        const container = document.getElementById('videoCardsContainer');
+        container.innerHTML = ''; // Clear the container
+
+        videos.forEach(video => {
+            const card = createVideoCard(video);
+            container.appendChild(card);
+        });
+    }
+
+    function createVideoCard(video) {
+        const div = document.createElement('div');
+        div.classList.add('video-card');
+
+        const h3 = document.createElement('h3');
+        h3.textContent = video.name;
+        div.appendChild(h3);
+
+        const description = document.createElement('p');
+        description.textContent = video.description;
+        div.appendChild(description);
+
+        const genreId = document.createElement('p');
+        genreId.textContent = `Genre ID: ${video.genreId}`;
+        div.appendChild(genreId);
+
+        const totalSeconds = document.createElement('p');
+        totalSeconds.textContent = `Total Seconds: ${video.totalSeconds}`;
+        div.appendChild(totalSeconds);
+
+        const streamingUrl = document.createElement('p');
+        streamingUrl.innerHTML = `Streaming URL: <a href="${video.streamingUrl}">${video.streamingUrl}</a>`;
+        div.appendChild(streamingUrl);
+
+        const imageId = document.createElement('p');
+        imageId.textContent = `Image ID: ${video.imageId}`;
+        div.appendChild(imageId);
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.innerHTML = `
+            <a href="/VideoMvc/Edit/${video.id}">Edit</a> |
+            <a href="/VideoMvc/Details/${video.id}">Details</a> |
+            <a href="/VideoMvc/Delete/${video.id}">Delete</a>
+        `;
+        div.appendChild(actionsDiv);
+
+        return div;
+    }
+
+    function updatePagination(currentPage, totalPages, pageSize) {
+        const paginationDiv = document.querySelector('.pagination');
+        paginationDiv.innerHTML = ''; // Clear existing links
+
+        if (currentPage > 1) {
+            paginationDiv.appendChild(createPaginationLink("First", 1, pageSize));
+            paginationDiv.appendChild(createPaginationLink("Previous", currentPage - 1, pageSize));
+        }
+
+        for (let i = 1; i <= totalPages; i++) {
+            paginationDiv.appendChild(createPaginationLink(i, i, pageSize));
+        }
+
+        if (currentPage < totalPages) {
+            paginationDiv.appendChild(createPaginationLink("Next", currentPage + 1, pageSize));
+            paginationDiv.appendChild(createPaginationLink("Last", totalPages, pageSize));
+        }
+    }
+
+    function createPaginationLink(text, page, pageSize) {
+        const link = document.createElement('a');
+        link.href = "javascript:void(0);";
+        link.onclick = () => loadVideos(page, pageSize);
+        link.textContent = text;
+        return link;
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // Check if the filter cookie exists
+        const filterNameFromCookie = getCookie('videoFilter');
+        if (filterNameFromCookie) {
+            document.getElementById('videoFilter').value = filterNameFromCookie;
+        }
+
+        loadVideosWithUIParams();
+    });
+</script>
+
+<style>
+    .video-cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .video-card {
+        border: 1px solid #ddd;
+        padding: 16px;
+        width: calc(33.33% - 32px); /* Assuming 3 cards in a row */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .pagination {
+        margin-top: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .pagination a {
+            margin: 0 5px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+            transition: background-color 0.3s;
+        }
+
+            .pagination a:hover {
+                background-color: #f5f5f5;
+            }
+       
+            
+.spinner {
+    border: 8px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 8px solid black;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+    display: none; /* Initially hidden */
+}
+
+@@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+</style>
